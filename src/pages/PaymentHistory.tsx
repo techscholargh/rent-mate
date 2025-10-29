@@ -1,4 +1,5 @@
 import { Search, Download, Calendar, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 
 const transactions = [
   {
@@ -39,6 +40,9 @@ const transactions = [
 ];
 
 export default function PaymentHistory() {
+  const [showDateRangeMenu, setShowDateRangeMenu] = useState(false);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -46,7 +50,13 @@ export default function PaymentHistory() {
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Payment History</h1>
           <p className="text-gray-600">Review all your past and upcoming payments.</p>
         </div>
-        <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-lg shadow-blue-600/30 hover:shadow-xl transform hover:-translate-y-0.5">
+        <button 
+          onClick={() => {
+            alert('Downloading payment history report...');
+            console.log('Download report');
+          }}
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 shadow-lg shadow-blue-600/30 hover:shadow-xl transform hover:-translate-y-0.5"
+        >
           <Download className="w-5 h-5" />
           <span className="font-semibold">Download Report</span>
         </button>
@@ -80,13 +90,71 @@ export default function PaymentHistory() {
               className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setShowDateRangeMenu(!showDateRangeMenu)}
+            className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors relative"
+          >
             <Calendar className="w-5 h-5 text-gray-600" />
             <span className="font-medium text-gray-700">Date Range</span>
+            
+            {showDateRangeMenu && (
+              <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-10">
+                <h3 className="font-semibold text-gray-900 mb-3">Select Date Range</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+                    <input 
+                      type="date" 
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+                    <input 
+                      type="date" 
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <button 
+                    onClick={() => setShowDateRangeMenu(false)}
+                    className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            )}
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setShowFilterMenu(!showFilterMenu)}
+            className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors relative"
+          >
             <Filter className="w-5 h-5 text-gray-600" />
             <span className="font-medium text-gray-700">Status: All</span>
+            
+            {showFilterMenu && (
+              <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-10">
+                <h3 className="font-semibold text-gray-900 mb-3">Filter by Status</h3>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="status" className="text-blue-600" defaultChecked />
+                    <span className="text-sm text-gray-700">All</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="status" className="text-blue-600" />
+                    <span className="text-sm text-gray-700">Successful</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="status" className="text-blue-600" />
+                    <span className="text-sm text-gray-700">Pending</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="status" className="text-blue-600" />
+                    <span className="text-sm text-gray-700">Failed</span>
+                  </label>
+                </div>
+              </div>
+            )}
           </button>
         </div>
       </div>
@@ -144,7 +212,13 @@ export default function PaymentHistory() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                    <button 
+                      onClick={() => {
+                        alert(`Downloading receipt for ${transaction.transactionId}`);
+                        console.log('Download receipt:', transaction);
+                      }}
+                      className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                    >
                       Download
                     </button>
                   </td>
@@ -155,7 +229,10 @@ export default function PaymentHistory() {
         </div>
 
         <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
-          <button className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+          <button 
+            onClick={() => alert('Previous page')}
+            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+          >
             <ChevronLeft className="w-5 h-5" />
             <span className="font-medium">Previous</span>
           </button>
@@ -165,7 +242,10 @@ export default function PaymentHistory() {
             <span className="font-semibold text-gray-900">10</span>
           </div>
 
-          <button className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+          <button 
+            onClick={() => alert('Next page')}
+            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+          >
             <span className="font-medium">Next</span>
             <ChevronRight className="w-5 h-5" />
           </button>
