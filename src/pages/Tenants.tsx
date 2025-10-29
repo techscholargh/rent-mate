@@ -1,4 +1,5 @@
-import { Search, Filter, Mail, Phone, MapPin, Calendar, Plus, MoreVertical } from 'lucide-react';
+import { Search, Filter, Mail, Phone, MapPin, Calendar, Plus, MoreVertical, MessageSquare, Send, X, FileText } from 'lucide-react';
+import { useState } from 'react';
 
 const tenants = [
   {
@@ -51,15 +52,46 @@ const tenants = [
   },
 ];
 
-export default function Tenants() {
+interface TenantsProps {
+  onAddTenant?: () => void;
+  onViewTenant?: (tenantId: number) => void;
+}
+
+export default function Tenants({ onAddTenant, onViewTenant }: TenantsProps = {}) {
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [showLeaseModal, setShowLeaseModal] = useState(false);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [showTenantMenu, setShowTenantMenu] = useState<number | null>(null);
+  const [selectedTenant, setSelectedTenant] = useState<typeof tenants[0] | null>(null);
+  const [deliveryMethod, setDeliveryMethod] = useState<'email' | 'whatsapp' | 'both'>('email');
+
+  const handleContactClick = (tenant: typeof tenants[0]) => {
+    setSelectedTenant(tenant);
+    setShowContactModal(true);
+  };
+
+  const handleSendLeaseClick = (tenant: typeof tenants[0]) => {
+    setSelectedTenant(tenant);
+    setShowLeaseModal(true);
+  };
+
+  const formatPhoneForWhatsApp = (phone: string) => {
+    // Remove all non-numeric characters
+    return phone.replace(/\D/g, '');
+  };
+
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Tenants</h1>
           <p className="text-gray-600">Manage your tenant information</p>
         </div>
-        <button className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 shadow-lg shadow-green-600/30 hover:shadow-xl transform hover:-translate-y-0.5">
+        <button
+          onClick={onAddTenant}
+          className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 shadow-lg shadow-green-600/30 hover:shadow-xl transform hover:-translate-y-0.5"
+        >
           <Plus className="w-5 h-5" />
           <span className="font-semibold">Add Tenant</span>
         </button>
@@ -75,9 +107,32 @@ export default function Tenants() {
               className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+          <button 
+            onClick={() => setShowFilterMenu(!showFilterMenu)}
+            className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors relative"
+          >
             <Filter className="w-5 h-5 text-gray-600" />
             <span className="font-medium text-gray-700">Filters</span>
+            
+            {showFilterMenu && (
+              <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-10">
+                <h3 className="font-semibold text-gray-900 mb-3">Filter by Status</h3>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="rounded text-blue-600" defaultChecked />
+                    <span className="text-sm text-gray-700">Active</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="rounded text-blue-600" />
+                    <span className="text-sm text-gray-700">Pending</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" className="rounded text-blue-600" />
+                    <span className="text-sm text-gray-700">Overdue</span>
+                  </label>
+                </div>
+              </div>
+            )}
           </button>
         </div>
       </div>
@@ -102,9 +157,57 @@ export default function Tenants() {
                   </span>
                 </div>
               </div>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <MoreVertical className="w-5 h-5 text-gray-600" />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setShowTenantMenu(showTenantMenu === tenant.id ? null : tenant.id)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <MoreVertical className="w-5 h-5 text-gray-600" />
+                </button>
+                
+                {showTenantMenu === tenant.id && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-10">
+                    <button 
+                      onClick={() => {
+                        onViewTenant?.(tenant.id);
+                        setShowTenantMenu(null);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      View Details
+                    </button>
+                    <button 
+                      onClick={() => {
+                        handleSendLeaseClick(tenant);
+                        setShowTenantMenu(null);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Send Lease
+                    </button>
+                    <button 
+                      onClick={() => {
+                        handleContactClick(tenant);
+                        setShowTenantMenu(null);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Contact
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if (confirm(`Are you sure you want to remove ${tenant.name}?`)) {
+                          alert('Tenant removed');
+                        }
+                        setShowTenantMenu(null);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Remove Tenant
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-3 mb-4">
@@ -137,16 +240,254 @@ export default function Tenants() {
             </div>
 
             <div className="flex gap-2">
-              <button className="flex-1 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium text-sm">
+              <button 
+                onClick={() => onViewTenant?.(tenant.id)}
+                className="flex-1 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors font-medium text-sm"
+              >
                 View Details
               </button>
-              <button className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm">
+              <button 
+                onClick={() => handleContactClick(tenant)}
+                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+              >
                 Contact
               </button>
             </div>
           </div>
         ))}
       </div>
-    </div>
+      </div>
+
+      {/* Contact Modal */}
+      {showContactModal && selectedTenant && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Contact {selectedTenant.name}</h2>
+              <button
+                onClick={() => setShowContactModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Phone */}
+              <a
+                href={`tel:${selectedTenant.phone}`}
+                className="flex items-center gap-4 p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all border border-blue-200 group"
+              >
+                <div className="p-3 bg-blue-600 rounded-lg group-hover:scale-110 transition-transform">
+                  <Phone className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Call</p>
+                  <p className="text-sm text-gray-600">{selectedTenant.phone}</p>
+                </div>
+              </a>
+
+              {/* Email */}
+              <a
+                href={`mailto:${selectedTenant.email}`}
+                className="flex items-center gap-4 p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition-all border border-purple-200 group"
+              >
+                <div className="p-3 bg-purple-600 rounded-lg group-hover:scale-110 transition-transform">
+                  <Mail className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Email</p>
+                  <p className="text-sm text-gray-600">{selectedTenant.email}</p>
+                </div>
+              </a>
+
+              {/* WhatsApp */}
+              <a
+                href={`https://wa.me/${formatPhoneForWhatsApp(selectedTenant.phone)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-all border border-green-200 group"
+              >
+                <div className="p-3 bg-green-600 rounded-lg group-hover:scale-110 transition-transform">
+                  <MessageSquare className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">WhatsApp</p>
+                  <p className="text-sm text-gray-600">Send message via WhatsApp</p>
+                </div>
+              </a>
+
+              {/* Send Lease Agreement */}
+              <button
+                onClick={() => {
+                  setShowContactModal(false);
+                  handleSendLeaseClick(selectedTenant);
+                }}
+                className="w-full flex items-center gap-4 p-4 bg-orange-50 rounded-xl hover:bg-orange-100 transition-all border border-orange-200 group"
+              >
+                <div className="p-3 bg-orange-600 rounded-lg group-hover:scale-110 transition-transform">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-gray-900">Send Lease Agreement</p>
+                  <p className="text-sm text-gray-600">Email lease document</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Lease Agreement Modal */}
+      {showLeaseModal && selectedTenant && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Send Lease Agreement</h2>
+              <button
+                onClick={() => setShowLeaseModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                <img
+                  src={selectedTenant.photo}
+                  alt={selectedTenant.name}
+                  className="w-12 h-12 rounded-full"
+                />
+                <div>
+                  <p className="font-semibold text-gray-900">{selectedTenant.name}</p>
+                  <p className="text-sm text-gray-600">{selectedTenant.email}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Select Template
+                </label>
+                <select className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option>Standard Residential Lease</option>
+                  <option>Month-to-Month Agreement</option>
+                  <option>Commercial Lease</option>
+                  <option>Lease Renewal</option>
+                  <option>Lease Amendment</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-2">
+                  Template will be auto-filled with tenant and property details
+                </p>
+              </div>
+
+              {/* Delivery Method */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  How would you like to send?
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMethod('email')}
+                    className={`p-4 border-2 rounded-xl transition-all ${
+                      deliveryMethod === 'email'
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 hover:border-blue-300'
+                    }`}
+                  >
+                    <Mail className={`w-6 h-6 mx-auto mb-2 ${
+                      deliveryMethod === 'email' ? 'text-blue-600' : 'text-gray-400'
+                    }`} />
+                    <p className={`text-sm font-semibold ${
+                      deliveryMethod === 'email' ? 'text-blue-600' : 'text-gray-600'
+                    }`}>
+                      Email
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMethod('whatsapp')}
+                    className={`p-4 border-2 rounded-xl transition-all ${
+                      deliveryMethod === 'whatsapp'
+                        ? 'border-green-600 bg-green-50'
+                        : 'border-gray-200 hover:border-green-300'
+                    }`}
+                  >
+                    <MessageSquare className={`w-6 h-6 mx-auto mb-2 ${
+                      deliveryMethod === 'whatsapp' ? 'text-green-600' : 'text-gray-400'
+                    }`} />
+                    <p className={`text-sm font-semibold ${
+                      deliveryMethod === 'whatsapp' ? 'text-green-600' : 'text-gray-600'
+                    }`}>
+                      WhatsApp
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeliveryMethod('both')}
+                    className={`p-4 border-2 rounded-xl transition-all ${
+                      deliveryMethod === 'both'
+                        ? 'border-purple-600 bg-purple-50'
+                        : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="flex justify-center gap-1 mb-2">
+                      <Mail className={`w-5 h-5 ${
+                        deliveryMethod === 'both' ? 'text-purple-600' : 'text-gray-400'
+                      }`} />
+                      <MessageSquare className={`w-5 h-5 ${
+                        deliveryMethod === 'both' ? 'text-purple-600' : 'text-gray-400'
+                      }`} />
+                    </div>
+                    <p className={`text-sm font-semibold ${
+                      deliveryMethod === 'both' ? 'text-purple-600' : 'text-gray-600'
+                    }`}>
+                      Both
+                    </p>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Message (Optional)
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder="Add a personal message..."
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  defaultValue={`Hi ${selectedTenant.name.split(' ')[0]},\n\nPlease find attached your personalized lease agreement for ${selectedTenant.property}. All tenant and property details have been filled in for your convenience.\n\nPlease review and let me know if you have any questions.\n\nBest regards`}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLeaseModal(false)}
+                className="flex-1 px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  // In a real app, this would send the email
+                  alert(`Lease agreement sent to ${selectedTenant.email}`);
+                  setShowLeaseModal(false);
+                }}
+                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2"
+              >
+                <Send className="w-5 h-5" />
+                Send Agreement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
