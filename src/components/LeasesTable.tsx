@@ -25,11 +25,23 @@ const leases = [
   },
 ];
 
-export default function LeasesTable() {
+interface LeasesTableProps {
+  onNavigateToTenants?: () => void;
+}
+
+export default function LeasesTable({ onNavigateToTenants }: LeasesTableProps) {
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-900">Leases Expiring in Next 60 Days</h2>
+        {onNavigateToTenants && (
+          <button
+            onClick={onNavigateToTenants}
+            className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
+          >
+            View All Tenants →
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
